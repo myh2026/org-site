@@ -852,3 +852,47 @@ Stage Summary:
   已从 GitHub 恢复，健康体检条重新点亮
 - 风险备忘：沙箱再次重置会复发此问题——恢复动作固定为「clone myh2026/org 到
   /home/z/org + curl /api/org-health 验证」；repo-stats 限额属环境性，恢复自动回流
+
+---
+Task ID: cicd-matrix（2026-09-07，用户指令「确认所有部分最新 + 完整三平台 CI/CD」）
+Agent: 主会话
+Task: 三仓库最新状态核验 + 补齐 Windows/macOS/Linux CI/CD 短板
+
+Work Log:
+- 最新状态核验（本地 == 远端三仓全一致）：org main@c1e34f2（v0.4.1 + CI 再生 +
+  本次 ci 增量）；org-harness main@b4f786d；org-site main@b79ffc6
+- 审查结论：org release.yml 已是完整五目标交叉编译矩阵（linux-x64/arm64 ·
+  darwin-x64/arm64 · windows-x64）+ sha256 旁车 + 汇总校验和，v0.4.1 实跑双绿；
+  org-harness CD 为平台中立源码包（天然跨平台），CI/Release 双绿
+- 【补短板 1】org ci.yml 新增 native-smoke job：真实 macOS / Windows 运行器上
+  build-bin 组装当前平台单二进制并真实执行（check / demo / tui --print 帧非空
+  断言）——此前五平台产物只在 ubuntu 上交叉编译产出，从未原生执行过。
+  macos 首跑即绿；windows 首跑败于 setup-bun 504（基础设施瞬断），重跑绿。
+  → c1e34f2 推送，run attempt 2 success
+- 【补短板 2】org-site 新建 .github/workflows/ci.yml：ubuntu/macos/windows
+  三 OS 矩阵 ×（bun install --frozen-lockfile → eslint → next build +
+  standalone 组装）；产品仓浅克隆到 runner.temp（workspace 之外，避免污染
+  官网 lint/tsc 口径）+ ORG_REPO_HOME 指向；workflow 注记 Pages 不适用原因
+  （server 组件 + API 路由，standalone 部署形态）
+- 【修复】windows 首跑：next build 10 页全生成成功，但 build 脚本尾部
+  `cp -r` 挂（windows 解析到的 cp 不认 -r）→ package.json build 改为
+  `bun -e` + fs.cpSync（recursive）跨平台语义，本地 /tmp 沙盒先验证等价性
+  再推送（b79ffc6）；windows 二跑 setup-bun 又遇 504 瞬断，第三次（attempt 2）
+  真实跑通 Build step → run success
+- 教训沉淀：①setup-bun 的 504 是 windows runner 偶发（本日两次），失败先看
+  挂在哪个 step，action 层瞬断直接 rerun-failed-jobs；②package.json 脚本里
+  的 POSIX cp/rm 在 windows 的 bun shell 下不可靠，组装类操作一律
+  bun -e + node:fs API
+
+Stage Summary:
+- 三仓 CI/CD 终态：
+  · org     = CI（ubuntu 全量校验 + macos/windows 原生执行冒烟）+ Release
+              （五目标交叉编译 × sha256 旁车）——三 OS 构建且三 OS 真实执行
+  · org-site= CI（三 OS × lint+build 矩阵）
+  · org-harness = CI + Release（平台中立源码包，双绿）
+- 全部 run 实跑核验（GitHub API），无「纸面 CI」；版本/提交号见上
+- 风险：setup-bun windows 504 偶发（重跑即过，未做 workflow 级重试包装）；
+  Node 20 deprecation 警告来自 actions/checkout@v4（官方会升 v5，暂不动）
+- 下一轮建议：①官网侧可选 CI 徽章（三仓 README/官网 nav 展示 build status）；
+  ②org release 可选追加「发布后下载资产 × 原生执行」终验 job；③产品侧
+  adapters 协议翻译、HSL G7/G8/G9 仍为既定路线
