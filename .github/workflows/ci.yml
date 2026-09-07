@@ -1,0 +1,59 @@
+# org-site CI —— 三平台构建验证（ubuntu / macOS / Windows）
+# ----------------------------------------------------------------------------
+# push(main) / PR 时，在三个真实操作系统上各跑一遍：
+#   1. bun install --frozen-lockfile
+#   2. eslint（bun run lint）
+#   3. next build + standalone 组装（bun run build；cp -r 由 bun 内置 shell
+#      在 Windows 上提供 POSIX 语义）
+#
+# 说明：
+# - 官网 server 端实时读取产品仓库（源码区 source.tsx / 工程体检条
+#   /api/org-health，默认 /home/z/org，可用 ORG_REPO_HOME 覆盖）。CI 中把
+#   产品仓浅克隆到 runner.temp —— 放在 workspace 之外，避免产品仓的 .ts
+#   混入官网的 lint / 类型检查口径。
+# - 回放区数据来自仓库内 public/demo/ 快照，不依赖外联。
+# - 本站是 Next.js standalone 服务端应用（server 组件 + API 路由），不适合
+#   GitHub Pages 静态托管；部署方式为自有机器运行 .next/standalone/server.js。
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: lint + build · ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Vendor 产品仓库（源码区/体检条的运行时依赖）
+        shell: bash
+        run: git clone --depth 1 https://github.com/myh2026/org.git "$RUNNER_TEMP/org"
+
+      - name: 安装依赖（frozen lockfile）
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Build（三平台构建验证）
+        env:
+          ORG_REPO_HOME: ${{ runner.temp }}/org
+        run: bun run build
