@@ -830,3 +830,25 @@ Stage Summary:
   该仓库任务 A 的活早已传完，本地无实质欠账
 - 可选后续（未被要求，仅备忘）：若用户想让 org-harness 同步 v0.4.1 内容或加
   「已由 org 接棒」公告，需要单独确认后执行（避免两个仓库双线维护混乱）
+
+---
+Task ID: sync-2（2026-09-07，用户指令「同步，提交修改」）
+Agent: 主会话
+Task: 双仓库同步——推送官网积压提交 + 恢复本地产品仓库
+
+Work Log:
+- 盘点同步欠账：org-site 本地领先远端 2 个提交（61e0775/614e15f，均为 worklog
+  巡检记录，工作树干净）；org-harness 复核无需动作（上条 verify 结论仍成立）
+- 发现关键缺口：沙箱重置导致 /home/z/org 产品仓库目录消失（官网 server 端
+  source.tsx / api/org-health 实时读取该路径）→ git clone myh2026/org 恢复；
+  main@09c5381 = v0.4.1(22e46b3) + 1 个 CI dist 再生提交，tag 对齐官网叙事
+- 验证：/api/org-health 恢复 ok:true（v0.4.1 · main@09c5381 · 30 模块 ·
+  内核 1203 行 · 3 test files）；dev.log 无异常。/api/repo-stats ok:false 为
+  已知沙箱 IP GitHub 限额（前端优雅降级，非回归）
+- 本条 worklog 更新后随积压提交一并推送 org-site
+
+Stage Summary:
+- 同步完成：官网源码与产品仓库均与远端一致；官网运行时依赖（/home/z/org）
+  已从 GitHub 恢复，健康体检条重新点亮
+- 风险备忘：沙箱再次重置会复发此问题——恢复动作固定为「clone myh2026/org 到
+  /home/z/org + curl /api/org-health 验证」；repo-stats 限额属环境性，恢复自动回流
