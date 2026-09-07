@@ -807,3 +807,26 @@ Stage Summary:
   与本地一致）。remote origin 已配置，后续直接 git push origin main
 - 注意：平台 checkpoint 会继续在本地产生新提交，下次推送前建议再次 squash 或
   直接在前端之上累积（推送用 git push origin main 即可，凭证走环境/一次性 URL）
+
+---
+Task ID: verify-org-harness（2026-09-07，用户指令「github.com/myh2026/org-harness 放这」）
+Agent: 主会话
+Task: 核实 org-harness 仓库的上传状态与健康度
+
+Work Log:
+- 本地克隆（workspace/org-harness）vs 远端：0 ahead / 0 behind——任务 A 全部成果
+  已在 GitHub（三平台 CD 修复 fb46755 fix(ci)、7a42709 fix(release) 等）
+- 工作树 83 个「改动」核验：全部为权限位噪音（100644→100755，平台环境 chmod）
+  + 本地复跑 demo 的时间戳再生产物（CI 会自动再生并回写）——正确处理是**不推送**
+- 远端健康度（GitHub API）：CI main 最新 run success；Release v0.2.0 最新 run
+  success（此前 08:49 一次 failure 已被 7a42709 修复重跑覆盖）
+- 本地验收复跑：bun cli/org.ts check → 28 个 HSL 模块 0 失败；bun cli/org.ts demo
+  → 1.9s 三连跑冒烟通过、dist/demo 快照导出正常
+- 版本关系澄清：org-harness = v0.2.0（任务 A 交付：三平台兼容 + CD 改造）；
+  myh2026/org = v0.4.1（任务 B 完整实现，现役 canonical，官网指向此）
+
+Stage Summary:
+- org-harness 无需任何推送动作——远端已是最新且全绿；「放这」的实质答案：
+  该仓库任务 A 的活早已传完，本地无实质欠账
+- 可选后续（未被要求，仅备忘）：若用户想让 org-harness 同步 v0.4.1 内容或加
+  「已由 org 接棒」公告，需要单独确认后执行（避免两个仓库双线维护混乱）
