@@ -786,3 +786,24 @@ Stage Summary:
      交互引导；lighthouse 跑分（关 chromium 后）
   2. 产品侧：adapters 协议翻译（导入体真正在岗）；org status 与 rail 联动刷新
   3. HSL 侧：G7 返工环有界 / G8 失败拓扑穷尽 / G9 预算可行性校验规则
+
+---
+Task ID: push-org-site（2026-09-07，用户指令「传一下」）
+Agent: 主会话
+Task: 官网仓库开源推送
+
+Work Log:
+- 推送前安全扫描：.env 仅含本地 db 路径（0 敏感字段）、全库 HEAD 无 gho_ 凭证、
+  worklog.md 无凭证——三查全过
+- 清理：workspace/ 两个 gitlink（推上会变坏子模块）、tool-results/ 工具产物、
+  异常文件 --full-page=false 全部出库并写入 .gitignore
+- 历史 squash：平台 UUID checkpoint 历史（8+ 提交）对开源无信息量，orphan 分支
+  压成单一干净首提交 1e28b4b（功能内容已在快照内，验证 keys-overlay 等在 HEAD）
+- GitHub API 建仓 myh2026/org-site（public，has_wiki=false）→ push main
+- 追加 chore 提交 untrack .env（29b1fc3）——遵循 .gitignore 的 .env* 约定
+
+Stage Summary:
+- 官网已开源：https://github.com/myh2026/org-site（2 提交，124 文件，远端 HEAD
+  与本地一致）。remote origin 已配置，后续直接 git push origin main
+- 注意：平台 checkpoint 会继续在本地产生新提交，下次推送前建议再次 squash 或
+  直接在前端之上累积（推送用 git push origin main 即可，凭证走环境/一次性 URL）
